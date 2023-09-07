@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import axios from 'axios';
+import cheerio from 'cheerio';  
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { url } = req.body;
@@ -8,9 +9,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let robotsTxt = 'Not Available';
 
   try {
-    // Scrape the main page for title and other info
     const response = await axios.get(url);
     const html = response.data;
+    const $ = cheerio.load(html);
+
+    // Meta tags using Cheerio
+    const metaTags = {
+      description: $('meta[name="description"]').attr('content'),
+      keywords: $('meta[name="keywords"]').attr('content'),
+      author: $('meta[name="author"]').attr('content'),
+    };
 
     // Identify CMS by looking for specific keywords or tags
     if (html.includes('wp-content')) {
@@ -55,12 +63,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } catch (error) {
       // Handle robots.txt fetch error if needed
     }
+    // Extract title using Cheerio
+    const title = $('title').text();
 
-    // Extract title
-    const titleMatch = html.match(/<title>(.*?)<\/title>/);
-    const title = titleMatch ? titleMatch[1] : 'No title found';
+    // HTTP headers
+    const headers = {
+      contentType: response.headers['content-type'],
+      cacheControl: response.headers['cache-control'],
+      server: response.headers['server'],
+    };
 
-    res.status(200).json({ title, cms, trackers, robotsTxt });
+    res.status(200).json({ title, cms, trackers, robotsTxt, metaTags, headers });
+
   } catch (error) {
     res.status(500).json({ error: 'Failed to scrape the URL' });
   }
