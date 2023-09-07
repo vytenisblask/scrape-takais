@@ -14,7 +14,7 @@ const LeftContainer = styled.div<{ $hasResults?: boolean }>`
   flex: 1;
   display: flex;
   justify-content: center;
-  align-items: ${props => props.$hasResults ? 'flex-start' : 'center'};
+  align-items: center;
   padding: ${props => props.$hasResults ? '20px' : '0'};
 `;
 
