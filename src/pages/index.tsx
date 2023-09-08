@@ -149,13 +149,13 @@ export default function Home() {
                     <Button type="submit">Go</Button>
                 </Form>
             </LeftContainer>
-
+            {isLoading && <BeatLoader color="#123abc" loading={isLoading} size={15} />}
             <RightContainer>
             {hasBasicInfo() && (
                 <div>
                     <h4>Basic info:</h4>
                     <BasicsTxtContainer>
-                        {isLoading && <BeatLoader color="#123abc" loading={isLoading} size={15} />}
+                        
                         {scrapedTitle && <p>Page Title: {scrapedTitle}</p>}
                         {cms && <p>CMS Used: {cms}</p>}
                         {trackers && <p>Trackers Used: {trackers}</p>}
