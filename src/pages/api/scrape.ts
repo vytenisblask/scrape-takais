@@ -1,9 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import axios from 'axios';
 import cheerio from 'cheerio';  
+import { css as cssBeautify } from 'js-beautify';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { url } = req.body;
+    const { url } = req.body;
   let cms = 'Unknown';
   let trackers = 'Unknown';
   let robotsTxt = 'Not Available';
@@ -73,7 +74,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       server: response.headers['server'],
     };
 
-    res.status(200).json({ title, cms, trackers, robotsTxt, metaTags, headers });
+    // Step 1: Extract the CSS URLs from the HTML using Cheerio
+    const cssUrls: string[] = [];
+    $('link[rel="stylesheet"]').each((index, element) => {
+      const cssUrl = $(element).attr('href');
+      if (cssUrl) {
+        cssUrls.push(cssUrl);
+      }
+    });
+
+    // Step 2: Fetch the content of the CSS URLs
+    let allCSS = '';
+    for (const cssUrl of cssUrls) {
+      try {
+        const cssResponse = await axios.get(cssUrl);
+        allCSS += cssResponse.data;
+      } catch (error) {
+        // Handle CSS fetch error if needed
+      }
+    }
+
+    // Step 3 & 4: Beautify the combined CSS
+    const beautifiedCSS = cssBeautify(allCSS);
+
+    res.status(200).json({ title, cms, trackers, robotsTxt, metaTags, headers, css: beautifiedCSS });
 
   } catch (error) {
     res.status(500).json({ error: 'Failed to scrape the URL' });

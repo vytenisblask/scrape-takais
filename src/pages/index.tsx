@@ -49,13 +49,32 @@ const Button = styled.button`
   cursor: pointer;
 `;
 
-const RobotsTxtContainer = styled.div`
-  max-height: 300px;
+const BasicsTxtContainer = styled.div`
+  max-height: 220px;
   overflow-y: auto;
   border: 1px solid #ccc;
   padding: 1em;
   margin-top: 1em;
   font-size: 0.8em;
+`;
+
+const RobotsTxtContainer = styled.div`
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  padding: 1em;
+  margin-top: 1em;
+  font-size: 0.8em;
+`;
+
+const CssContainer = styled.div`
+  max-height: 200px; 
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  padding: 1em;
+  margin-top: 1em;
+  font-size: 0.8em;
+  white-space: pre-wrap;  // Preserve white space and new lines
 `;
 
 export default function Home() {
@@ -65,6 +84,8 @@ export default function Home() {
     const [trackers, setTrackers] = useState<string | null>(null);
     const [robotsTxt, setRobotsTxt] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [cssData, setCssData] = useState<string | null>(null);
+
 
     const [metaTags, setMetaTags] = useState({
         description: null,
@@ -98,6 +119,8 @@ export default function Home() {
         setMetaTags(data.metaTags);
         setHeaders(data.headers);
         setIsLoading(false);
+        setCssData(data.css);
+
     };
 
     const containerStyle = {
@@ -108,6 +131,10 @@ export default function Home() {
         alignItems: !!scrapedTitle ? 'flex-start' : 'center',
         padding: !!scrapedTitle ? '20px' : '0'
     };
+
+    const hasBasicInfo = () => {
+        return scrapedTitle || cms || trackers || metaTags.description || metaTags.keywords || metaTags.author || headers.contentType || headers.cacheControl || headers.server;
+    };    
 
     return (
         <Container $hasResults={!!scrapedTitle}>
@@ -124,22 +151,38 @@ export default function Home() {
             </LeftContainer>
 
             <RightContainer>
-                {isLoading && <BeatLoader color="#123abc" loading={isLoading} size={15} />}
-                {scrapedTitle && <p>Page Title: {scrapedTitle}</p>}
-                {cms && <p>CMS Used: {cms}</p>}
-                {trackers && <p>Trackers Used: {trackers}</p>}
-                {metaTags.description && <p>Meta Description: {metaTags.description}</p>}
-                {metaTags.keywords && <p>Meta Keywords: {metaTags.keywords}</p>}
-                {metaTags.author && <p>Meta Author: {metaTags.author}</p>}
-                {headers.contentType && <p>Content Type: {headers.contentType}</p>}
-                {headers.cacheControl && <p>Cache Control: {headers.cacheControl}</p>}
-                {headers.server && <p>Server Type: {headers.server}</p>}
+            {hasBasicInfo() && (
+                <div>
+                    <h4>Basic info:</h4>
+                    <BasicsTxtContainer>
+                        {isLoading && <BeatLoader color="#123abc" loading={isLoading} size={15} />}
+                        {scrapedTitle && <p>Page Title: {scrapedTitle}</p>}
+                        {cms && <p>CMS Used: {cms}</p>}
+                        {trackers && <p>Trackers Used: {trackers}</p>}
+                        {metaTags.description && <p>Meta Description: {metaTags.description}</p>}
+                        {metaTags.keywords && <p>Meta Keywords: {metaTags.keywords}</p>}
+                        {metaTags.author && <p>Meta Author: {metaTags.author}</p>}
+                        {headers.contentType && <p>Content Type: {headers.contentType}</p>}
+                        {headers.cacheControl && <p>Cache Control: {headers.cacheControl}</p>}
+                        {headers.server && <p>Server Type: {headers.server}</p>}
+                    </BasicsTxtContainer>
+                </div>
+            )}
+
                 {robotsTxt && (
                     <div>
-                        <p>Robots.txt content:</p>
+                        <h4>Robots.txt content:</h4>
                         <RobotsTxtContainer>
                             <pre>{robotsTxt}</pre>
                         </RobotsTxtContainer>
+                    </div>
+                )}
+                {cssData && (
+                    <div>
+                        <h4>Raw CSS:</h4>
+                        <CssContainer>
+                            {cssData}
+                        </CssContainer>
                     </div>
                 )}
             </RightContainer>
