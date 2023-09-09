@@ -1,17 +1,39 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import axios from 'axios';
 import cheerio from 'cheerio';  
-import { css as cssBeautify } from 'js-beautify';
+import cssBeautify from 'js-beautify';
+import puppeteer from 'puppeteer-core';
+import chrome from 'chrome-aws-lambda';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-    const { url } = req.body;
+  const { url } = req.body;
   let cms = 'Unknown';
   let trackers = 'Unknown';
   let robotsTxt = 'Not Available';
+  let mainResponseHeaders;
+  let browser;
 
   try {
-    const response = await axios.get(url);
-    const html = response.data;
+    console.log("Launching Puppeteer...");
+    browser = await puppeteer.launch({
+      args: chrome.args,
+      executablePath: await chrome.executablePath,
+      headless: chrome.headless,
+    });
+    console.log("Puppeteer launched!");
+
+    const page = await browser.newPage();
+
+    // Listen to the response of the main page to capture its headers
+    page.on('response', async (response) => {
+        if (response.url() === url) {
+            mainResponseHeaders = response.headers();
+        }
+    });
+
+    await page.goto(url, { waitUntil: 'networkidle2' });
+
+    const html = await page.content();
+
     const $ = cheerio.load(html);
 
     // Meta tags using Cheerio
@@ -59,47 +81,56 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Fetch robots.txt
     try {
-      const robotsResponse = await axios.get(`${url}/robots.txt`);
-      robotsTxt = robotsResponse.data;
+      await page.goto(`${url}/robots.txt`, { waitUntil: 'networkidle2' });
+      robotsTxt = await page.content(); // or page.text() to get just the text without HTML tags
     } catch (error) {
       // Handle robots.txt fetch error if needed
     }
+
     // Extract title using Cheerio
     const title = $('title').text();
 
-    // HTTP headers
+    // HTTP headers using the captured headers from the main page request
+    let mainResponseHeaders: any = {};
     const headers = {
-      contentType: response.headers['content-type'],
-      cacheControl: response.headers['cache-control'],
-      server: response.headers['server'],
-    };
+      contentType: mainResponseHeaders['content-type'],
+      cacheControl: mainResponseHeaders['cache-control'],
+      server: mainResponseHeaders['server'],
+    }; 
+   // Step 1: Extract the CSS URLs from the HTML using Cheerio
+   const cssUrls: string[] = [];
+   $('link[rel="stylesheet"]').each((index, element) => {
+     const cssUrl = $(element).attr('href');
+     if (cssUrl) {
+       cssUrls.push(cssUrl);
+     }
+   });
 
-    // Step 1: Extract the CSS URLs from the HTML using Cheerio
-    const cssUrls: string[] = [];
-    $('link[rel="stylesheet"]').each((index, element) => {
-      const cssUrl = $(element).attr('href');
-      if (cssUrl) {
-        cssUrls.push(cssUrl);
-      }
-    });
+   // Step 2: Fetch the content of the CSS URLs using Puppeteer
+   let allCSS = '';
+   for (const cssUrl of cssUrls) {
+     try {
+       const cssResponse = await page.goto(cssUrl); // Using Puppeteer to fetch CSS
+       if (cssResponse) {
+         allCSS += await cssResponse.text();
+       }
+     } catch (error) {
+       // Handle CSS fetch error here
+     }
+   }
 
-    // Step 2: Fetch the content of the CSS URLs
-    let allCSS = '';
-    for (const cssUrl of cssUrls) {
-      try {
-        const cssResponse = await axios.get(cssUrl);
-        allCSS += cssResponse.data;
-      } catch (error) {
-        // Handle CSS fetch error if needed
-      }
-    }
+   // Step 3 & 4: Beautify the combined CSS
+   const beautifiedCSS = cssBeautify(allCSS);
 
-    // Step 3 & 4: Beautify the combined CSS
-    const beautifiedCSS = cssBeautify(allCSS);
-
-    res.status(200).json({ title, cms, trackers, robotsTxt, metaTags, headers, css: beautifiedCSS });
+   res.status(200).json({ title, cms, trackers, robotsTxt, metaTags, headers, css: beautifiedCSS });
 
   } catch (error) {
-    res.status(500).json({ error: 'Failed to scrape the URL' });
+    console.error("Error during scraping:", error);
+    res.status(500).json({ error: `Failed to scrape the URL: ${(error as Error).message}` });
+  } finally {
+    // Ensure the browser instance is closed
+    if (browser) {
+      await browser.close();
+    }
   }
 }

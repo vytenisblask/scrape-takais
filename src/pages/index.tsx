@@ -79,66 +79,60 @@ const CssContainer = styled.div`
 
 export default function Home() {
     const [url, setUrl] = useState<string>('');
-    const [scrapedTitle, setScrapedTitle] = useState<string | null>(null);
-    const [cms, setCms] = useState<string | null>(null);
-    const [trackers, setTrackers] = useState<string | null>(null);
-    const [robotsTxt, setRobotsTxt] = useState<string | null>(null);
+    const [scrapedTitle, setScrapedTitle] = useState<string>('');
+    const [cms, setCms] = useState<string>('');
+    const [trackers, setTrackers] = useState<string>('');
+    const [robotsTxt, setRobotsTxt] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
-    const [cssData, setCssData] = useState<string | null>(null);
-
-
-    const [metaTags, setMetaTags] = useState({
-        description: null,
-        keywords: null,
-        author: null
-    });
-
-    const [headers, setHeaders] = useState({
-        contentType: null,
-        cacheControl: null,
-        server: null
-    });
+    const [cssData, setCssData] = useState<string>('');
+    const [metaTags, setMetaTags] = useState<{ description?: string, keywords?: string, author?: string }>({});
+    const [headers, setHeaders] = useState<{ contentType?: string, cacheControl?: string, server?: string }>({});
+    const [error, setError] = useState<string>('');
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
+        setError('');  // Reset any previous errors
 
-        const response = await fetch('/api/scrape', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ url }),
-        });
+        try {
+            const response = await fetch('/api/scrape', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ url }),
+            });
 
-        const data = await response.json();
-        setScrapedTitle(data.title);
-        setCms(data.cms);
-        setTrackers(data.trackers);
-        setRobotsTxt(data.robotsTxt);
-        setMetaTags(data.metaTags);
-        setHeaders(data.headers);
-        setIsLoading(false);
-        setCssData(data.css);
+            if (!response.ok) {
+                throw new Error('Failed to fetch data.');
+            }
 
-    };
-
-    const containerStyle = {
-        flexDirection: !!scrapedTitle ? 'row' : 'column'
-    };
-    
-    const leftContainerStyle = {
-        alignItems: !!scrapedTitle ? 'flex-start' : 'center',
-        padding: !!scrapedTitle ? '20px' : '0'
+            const data = await response.json();
+            setScrapedTitle(data.title || '');
+            setCms(data.cms || '');
+            setTrackers(data.trackers || '');
+            setRobotsTxt(data.robotsTxt || '');
+            setMetaTags(data.metaTags || {});
+            setHeaders(data.headers || {});
+            setCssData(data.css || '');
+        } catch (error) {
+            if (error instanceof Error) {
+                setError(error.message);
+            } else {
+                setError('An unexpected error occurred.');
+            }
+        }   finally {
+            setIsLoading(false);
+        }
     };
 
     const hasBasicInfo = () => {
-        return scrapedTitle || cms || trackers || metaTags.description || metaTags.keywords || metaTags.author || headers.contentType || headers.cacheControl || headers.server;
+        return scrapedTitle || cms || trackers || metaTags?.description || metaTags?.keywords || metaTags?.author || headers?.contentType || headers?.cacheControl || headers?.server;
     };    
 
     return (
         <Container $hasResults={!!scrapedTitle}>
-             <LeftContainer $hasResults={!!scrapedTitle}>
+            <LeftContainer $hasResults={!!scrapedTitle}>
                 <Form onSubmit={handleSubmit}>
                     <Input 
                         type="text" 
@@ -150,24 +144,24 @@ export default function Home() {
                 </Form>
             </LeftContainer>
             {isLoading && <BeatLoader color="#123abc" loading={isLoading} size={15} />}
+            {error && <p style={{ color: 'red' }}>{error}</p>}
             <RightContainer>
-            {hasBasicInfo() && (
-                <div>
-                    <h4>Basic info:</h4>
-                    <BasicsTxtContainer>
-                        
-                        {scrapedTitle && <p>Page Title: {scrapedTitle}</p>}
-                        {cms && <p>CMS Used: {cms}</p>}
-                        {trackers && <p>Trackers Used: {trackers}</p>}
-                        {metaTags.description && <p>Meta Description: {metaTags.description}</p>}
-                        {metaTags.keywords && <p>Meta Keywords: {metaTags.keywords}</p>}
-                        {metaTags.author && <p>Meta Author: {metaTags.author}</p>}
-                        {headers.contentType && <p>Content Type: {headers.contentType}</p>}
-                        {headers.cacheControl && <p>Cache Control: {headers.cacheControl}</p>}
-                        {headers.server && <p>Server Type: {headers.server}</p>}
-                    </BasicsTxtContainer>
-                </div>
-            )}
+                {hasBasicInfo() && (
+                    <div>
+                        <h4>Basic info:</h4>
+                        <BasicsTxtContainer>
+                            {scrapedTitle && <p>Page Title: {scrapedTitle}</p>}
+                            {cms && <p>CMS Used: {cms}</p>}
+                            {trackers && <p>Trackers Used: {trackers}</p>}
+                            {metaTags?.description && <p>Meta Description: {metaTags.description}</p>}
+                            {metaTags?.keywords && <p>Meta Keywords: {metaTags.keywords}</p>}
+                            {metaTags?.author && <p>Meta Author: {metaTags.author}</p>}
+                            {headers?.contentType && <p>Content Type: {headers.contentType}</p>}
+                            {headers?.cacheControl && <p>Cache Control: {headers.cacheControl}</p>}
+                            {headers?.server && <p>Server Type: {headers.server}</p>}
+                        </BasicsTxtContainer>
+                    </div>
+                )}
 
                 {robotsTxt && (
                     <div>
@@ -187,5 +181,5 @@ export default function Home() {
                 )}
             </RightContainer>
         </Container>
-    );    
+    );
 }
