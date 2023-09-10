@@ -1,3 +1,5 @@
+process.env.DEBUG = "puppeteer:*";
+
 import { NextApiRequest, NextApiResponse } from 'next';
 import cheerio from 'cheerio';  
 import cssBeautify from 'js-beautify';
