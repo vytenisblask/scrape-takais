@@ -11,7 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   
   let cms = 'Unknown';
   let trackers = 'Unknown';
-  let robotsTxt = 'Not Available'; // Note: This won't be fetched in the current setup
+  let robotsTxt = 'Not Available'; 
 
   const fullUrl = url && normalizeUrl(url, { stripAuthentication: false });
 
@@ -27,8 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const html = cssResponse.css;
     const $ = cheerio.load(html);
 
-    // Identify CMS by looking for specific keywords or tags
-    // Note: These checks might not be effective on CSS content alone, but we're retaining them for now
+    // Maps for CMS and trackers detection
     const cmsCheckers = {
       'wp-content': 'WordPress',
       'media/com_': 'Joomla',
@@ -41,12 +40,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     for (const [key, value] of Object.entries(cmsCheckers)) {
       if (html.includes(key)) {
-        cms = value as string;
+        cms = value;
         break;
       }
     }
 
-    // Identify trackers
     const trackerCheckers = {
       'google-analytics.com': 'Google Analytics',
       'gtag(': 'Google Analytics',
@@ -58,12 +56,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let detectedTrackers: string[] = [];
     for (const [key, value] of Object.entries(trackerCheckers)) {
       if (html.includes(key)) {
-        detectedTrackers.push(value as string);
+        detectedTrackers.push(value);
       }
     }
     trackers = detectedTrackers.join(', ');
 
-    // Beautify the CSS
     const beautifiedCSS = cssBeautify(html);
 
     res.status(200).json({ cms, trackers, robotsTxt, css: beautifiedCSS });
