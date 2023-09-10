@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import cheerio from 'cheerio';  
 import cssBeautify from 'js-beautify';
 import puppeteer from 'puppeteer-core';
-import chrome from 'chrome-aws-lambda';
+import chromium from '@sparticuz/chromium';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { url } = req.body;
@@ -14,11 +14,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     console.log("Launching Puppeteer...");
+
     browser = await puppeteer.launch({
-      args: chrome.args,
-      executablePath: await chrome.executablePath,
-      headless: chrome.headless,
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
+      ignoreHTTPSErrors: true,
     });
+    
     console.log("Puppeteer launched!");
 
     const page = await browser.newPage();
