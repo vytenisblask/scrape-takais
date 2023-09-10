@@ -15,7 +15,7 @@
     "axios": "^1.5.0",
     "cheerio": "^1.0.0-rc.12",
     "cssbeautify": "^0.3.1",
-    "get-css": "^4.0.3",
+    "get-css": "^1.1.1",
     "is-present": "^1.0.0",
     "is-url": "^1.2.4",
     "next": "13.4.19",
@@ -27,6 +27,7 @@
     "typescript": "5.2.2"
   },
   "devDependencies": {
+    "@types/cssbeautify": "^0.3.3",
     "@types/js-beautify": "^1.14.0"
   }
 }
