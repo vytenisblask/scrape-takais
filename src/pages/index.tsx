@@ -2,28 +2,29 @@ import { useState, FormEvent } from 'react';
 import styled from 'styled-components';
 import BeatLoader from "react-spinners/BeatLoader";
 
-const Container = styled.div<{ $hasResults?: boolean }>`
+// Main container style
+const Container = styled.div`
   display: flex;
   height: 100vh;
-  flex-direction: ${props => props.$hasResults ? 'row' : 'column'};
-  align-items: center;
-  justify-content: center;
+  flex-direction: row;
+  @media (max-width: 600px) {
+    flex-direction: column;
+  }
 `;
 
-const LeftContainer = styled.div<{ $hasResults?: boolean }>`
+// Left container which contains Form, BasicInfo, and RobotsTxt
+const LeftContainer = styled.div`
   flex: 1;
   display: flex;
+  flex-direction: column;
   justify-content: center;
-  align-items: center;
-  padding: ${props => props.$hasResults ? '20px' : '0'};
-`;
-
-const RightContainer = styled.div`
-  flex: 2;
   padding: 20px;
-  overflow-y: auto;
+  @media (max-width: 600px) {
+    padding: 10px 0;
+  }
 `;
 
+// Form styling
 const Form = styled.form`
   display: flex;
   flex-direction: column;
@@ -32,14 +33,19 @@ const Form = styled.form`
   padding: 2em;
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  @media (max-width: 600px) {
+    margin-bottom: 20px;
+  }
 `;
 
+// Input styling
 const Input = styled.input`
   padding: 8px;
   border: 1px solid ${(props) => props.theme.colors.secondary};
   border-radius: 4px;
 `;
 
+// Button styling
 const Button = styled.button`
   padding: 8px 16px;
   background-color: ${(props) => props.theme.colors.primary};
@@ -47,9 +53,19 @@ const Button = styled.button`
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: #0077cc;
+  }
+
+  &:active {
+    background-color: #0055aa;
+  }
 `;
 
-const BasicsTxtContainer = styled.div`
+// Basic Info and RobotsTxt containers
+const InfoContainer = styled.div`
   max-height: 220px;
   overflow-y: auto;
   border: 1px solid #ccc;
@@ -58,23 +74,29 @@ const BasicsTxtContainer = styled.div`
   font-size: 0.8em;
 `;
 
-const RobotsTxtContainer = styled.div`
-  max-height: 220px;
+// Right container which contains CSS data
+const RightContainer = styled.div`
+  flex: 2;
+  padding: 20px;
   overflow-y: auto;
-  border: 1px solid #ccc;
-  padding: 1em;
-  margin-top: 1em;
-  font-size: 0.8em;
 `;
 
+// CSS container
 const CssContainer = styled.div`
-  max-height: 200px; 
+  max-height: calc(100vh - 150px); // Account for padding
   overflow-y: auto;
   border: 1px solid #ccc;
   padding: 1em;
-  margin-top: 1em;
   font-size: 0.8em;
   white-space: pre-wrap;  // Preserve white space and new lines
+`;
+
+// Loader style
+const LoaderContainer = styled.div`
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 `;
 
 export default function Home() {
@@ -131,46 +153,34 @@ export default function Home() {
     };    
 
     return (
-        <Container $hasResults={!!scrapedTitle}>
-            <LeftContainer $hasResults={!!scrapedTitle}>
-                <Form onSubmit={handleSubmit}>
-                    <Input 
-                        type="text" 
-                        value={url} 
-                        onChange={(e) => setUrl(e.target.value)} 
-                        placeholder="Enter URL to scrape" 
-                    />
-                    <Button type="submit">Go</Button>
-                </Form>
-            </LeftContainer>
-            {isLoading && <BeatLoader color="#123abc" loading={isLoading} size={15} />}
-            {error && <p style={{ color: 'red' }}>{error}</p>}
-            <RightContainer>
-                {hasBasicInfo() && (
-                    <div>
-                        <h4>Basic info:</h4>
-                        <BasicsTxtContainer>
-                            {scrapedTitle && <p>Page Title: {scrapedTitle}</p>}
-                            {cms && <p>CMS Used: {cms}</p>}
-                            {trackers && <p>Trackers Used: {trackers}</p>}
-                            {metaTags?.description && <p>Meta Description: {metaTags.description}</p>}
-                            {metaTags?.keywords && <p>Meta Keywords: {metaTags.keywords}</p>}
-                            {metaTags?.author && <p>Meta Author: {metaTags.author}</p>}
-                            {headers?.contentType && <p>Content Type: {headers.contentType}</p>}
-                            {headers?.cacheControl && <p>Cache Control: {headers.cacheControl}</p>}
-                            {headers?.server && <p>Server Type: {headers.server}</p>}
-                        </BasicsTxtContainer>
-                    </div>
-                )}
+        <Container>
+        <LeftContainer>
+            <Form onSubmit={handleSubmit}>
+                <Input 
+                    type="text" 
+                    value={url} 
+                    onChange={(e) => setUrl(e.target.value)} 
+                    placeholder="Enter URL to scrape" 
+                />
+                <Button type="submit">Go</Button>
+            </Form>
+            {hasBasicInfo() && (
+                <InfoContainer>
+                    <h4>Basic info:</h4>
+                    {scrapedTitle && <p>Page Title: {scrapedTitle}</p>}
+                    {cms && <p>CMS Used: {cms}</p>}
+                    {trackers && <p>Trackers Used: {trackers}</p>}
+                </InfoContainer>
+            )}
+            {robotsTxt && (
+                <InfoContainer>
+                    <h4>Robots.txt content:</h4>
+                    <pre>{robotsTxt}</pre>
+                </InfoContainer>
+            )}
+        </LeftContainer>
 
-                {robotsTxt && (
-                    <div>
-                        <h4>Robots.txt content:</h4>
-                        <RobotsTxtContainer>
-                            <pre>{robotsTxt}</pre>
-                        </RobotsTxtContainer>
-                    </div>
-                )}
+            <RightContainer>
                 {cssData && (
                     <div>
                         <h4>Raw CSS:</h4>
@@ -180,6 +190,13 @@ export default function Home() {
                     </div>
                 )}
             </RightContainer>
+
+            {isLoading && 
+                <LoaderContainer>
+                    <BeatLoader color="#123abc" loading={isLoading} size={15} />
+                </LoaderContainer>
+            }
+            {error && <p style={{ color: 'red', position: 'absolute', bottom: 10, left: 10 }}>{error}</p>}
         </Container>
     );
 }
