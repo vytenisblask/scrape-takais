@@ -1,20 +1,20 @@
-import { ThemeProvider } from 'styled-components';
+import { ChakraProvider } from '@chakra-ui/react';
+import { ThemeProvider } from 'styled-components'; // Only if you still need styled-components
 import type { AppProps } from 'next/app';
-import GlobalStyles from '../styles/GlobalStyles';
-import theme from '../styles/theme';
 import Head from 'next/head';
+import theme from '../styles/theme'; // Your custom theme for styled-components
 
 function MyApp({ Component, pageProps }: AppProps) {
     return (
-      <ThemeProvider theme={theme}>
-        <Head>
-          <title>Scrape-a-roonie</title>
-        </Head>
-        <GlobalStyles />
-        <Component {...pageProps} />
-      </ThemeProvider>
+      <ChakraProvider>
+        <ThemeProvider theme={theme}> {/* Optional: If you still use styled-components */}
+          <Head>
+            <title>Scrape-a-roonie</title>
+          </Head>
+          <Component {...pageProps} />
+        </ThemeProvider>
+      </ChakraProvider>
     );
-  }
-  
+}
 
 export default MyApp;
