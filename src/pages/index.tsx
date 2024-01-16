@@ -8,9 +8,14 @@ import {
     VStack, 
     useColorModeValue, 
     Heading, 
-    Divider 
+    Divider,
+    Code,
+    IconButton,
+    useClipboard,
+    Tooltip, 
 } from '@chakra-ui/react';
 import BeatLoader from "react-spinners/BeatLoader";
+import { CopyIcon } from '@chakra-ui/icons';
 
 export default function Home() {
     const [url, setUrl] = useState<string>('');
@@ -63,7 +68,9 @@ export default function Home() {
 
     const hasBasicInfo = () => {
         return scrapedTitle || cms || trackers || metaTags?.description || metaTags?.keywords || metaTags?.author || headers?.contentType || headers?.cacheControl || headers?.server;
-    };    
+    };
+
+    const { hasCopied, onCopy } = useClipboard(cssData);
 
     return (
       <Container maxW="container.xl" p={4}>
@@ -78,7 +85,7 @@ export default function Home() {
                               placeholder="Enter URL to scrape" 
                               borderColor={useColorModeValue('gray.300', 'gray.700')}
                           />
-                          <Button colorScheme="blue" type="submit">Go</Button>
+                          <Button colorScheme="blue" type="submit">Scrape It</Button>
                       </VStack>
                   </form>
 
@@ -101,16 +108,29 @@ export default function Home() {
               </VStack>
 
               <Box flex="2" p={4} overflowY="auto">
-                  {cssData && (
-                      <Box>
-                          <Heading as="h4" size="md">Raw CSS:</Heading>
-                          <Box border="1px" borderColor="gray.300" p={4} borderRadius="md" overflowY="auto" maxHeight="calc(100vh - 150px)" whiteSpace="pre-wrap">
-{cssData}
-</Box>
-</Box>
-)}
-</Box>
-</Box>
+            {cssData && (
+                <Box>
+                    <Heading as="h4" size="md" mb={2} display="flex" alignItems="center">
+                        Raw CSS
+                        <Tooltip label={hasCopied ? "Copied!" : "Copy to Clipboard"}>
+                            <IconButton 
+                                aria-label="Copy CSS" 
+                                icon={<CopyIcon />} 
+                                onClick={onCopy} 
+                                ml={2} 
+                                size="sm" 
+                            />
+                        </Tooltip>
+                    </Heading>
+                    <Box border="1px" borderColor="gray.300" p={4} borderRadius="md" overflowY="auto" maxHeight="calc(100vh - 150px)">
+                        <pre>
+                            <Code whiteSpace="pre-wrap">{cssData}</Code>
+                        </pre>
+                    </Box>
+                </Box>
+            )}
+        </Box>
+            </Box>
       {isLoading && 
           <Box position="fixed" top="50%" left="50%" transform="translate(-50%, -50%)">
               <BeatLoader color="#123abc" loading={isLoading} size={15} />
