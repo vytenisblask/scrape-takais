@@ -1,13 +1,20 @@
-const theme = {
-    colors: {
-      primary: '#007bff',
-      secondary: '#6c757d',
-      success: '#28a745',
-      danger: '#dc3545',
-      light: '#f8f9fa',
-      dark: '#343a40',
-    },
-  };
-  
-  export default theme;
-  
+import { extendTheme, ThemeConfig, StyleFunctionProps } from "@chakra-ui/react";
+
+const config: ThemeConfig = {
+  initialColorMode: "dark",
+  useSystemColorMode: false,
+};
+
+const theme = extendTheme({
+  config,
+  styles: {
+    global: (props: StyleFunctionProps) => ({
+      body: {
+        bg: props.colorMode === "dark" ? "blackAlpha.400" : "whiteAlpha.900",
+      },
+    }),
+  },
+  // ... other theme configurations
+});
+
+export default theme;
