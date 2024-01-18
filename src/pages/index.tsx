@@ -94,7 +94,7 @@ export default function Home() {
     <Container maxW="container.xl" p={4}>
       <Box display={{ base: "block", md: "flex" }}>
         <VStack flex="1" p={4} spacing={4}>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} style={{ width: "100%" }}>
             <VStack spacing={4}>
               <Input
                 type="text"
