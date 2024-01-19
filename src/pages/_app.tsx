@@ -8,7 +8,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   return (
     <ChakraProvider theme={theme}>
       <Head>
-        <title>Scrape-a-roonie</title>
+        <title>CSS Scraper</title>
       </Head>
       <NavigationBar />
       <Component {...pageProps} />
